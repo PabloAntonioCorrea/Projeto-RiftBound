@@ -1,23 +1,259 @@
-'use strict';
-// EDITE AQUI: DDI 55 + DDD + número, apenas dígitos.
-const WHATSAPP_NUMERO = '5555997116485';
+"use strict";
+
+// ===== CONFIGURATIONS =====
+const WHATSAPP_NUMERO = "5555997116485";
+const STORAGE_KEY = "riftbound-fichario-selecao-v1";
+
+// ===== UTILITIES =====
 const $ = (s) => document.querySelector(s);
 let cartas = [];
-const STORAGE_KEY = 'riftbound-fichario-selecao-v1';
 let selecionadas = {};
-try { selecionadas = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch { selecionadas = {}; }
-const save = () => { try {localStorage.setItem(STORAGE_KEY, JSON.stringify(selecionadas));} catch {} };
-const el = (tag, cls, value) => {const x = document.createElement(tag);if(cls)x.className=cls;if(value!==undefined)x.textContent=value;return x;};
-const norm = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-function fillFilter(id, key) {const select=$(id); [...new Set(cartas.map(c=>c[key]))].filter(Boolean).sort().forEach(v=>{const o=el('option','',v);o.value=v;select.append(o)});}
-function setQty(id, newQty) {const c=cartas.find(x=>x.id===id);if(!c)return;const qty=Math.max(0, Math.min(c.estoque, newQty));if(qty) selecionadas[id]=qty;else delete selecionadas[id];save();render();renderCart();}
-function quantityControl(c){const box=el('div','qty');const minus=el('button','', '−'), val=el('b','', String(selecionadas[c.id]||0)),plus=el('button','','+');minus.type=plus.type='button';minus.disabled=!selecionadas[c.id];plus.disabled=(selecionadas[c.id]||0)>=c.estoque;minus.setAttribute('aria-label','Diminuir '+c.nome);plus.setAttribute('aria-label','Aumentar '+c.nome);minus.onclick=()=>setQty(c.id,(selecionadas[c.id]||0)-1);plus.onclick=()=>setQty(c.id,(selecionadas[c.id]||0)+1);box.append(minus,val,plus);return box;}
-function render(){const q=norm($('#search').value.trim()), collection=$('#collection').value, type=$('#type').value,rarity=$('#rarity').value,foil=$('#foil').checked,sort=$('#sort').value;let shown=cartas.filter(c=>(!q||norm(c.nome+' '+c.codigo).includes(q))&&(!collection||c.colecao===collection)&&(!type||c.tipo===type)&&(!rarity||c.raridade===rarity)&&(!foil||c.foil));shown.sort((a,b)=>sort==='stock'?b.estoque-a.estoque:sort==='collection'?a.colecao.localeCompare(b.colecao)||a.nome.localeCompare(b.nome):a.nome.localeCompare(b.nome));const grid=$('#grid');grid.replaceChildren();$('#results').textContent=`${shown.length} ${shown.length===1?'carta encontrada':'cartas encontradas'}`;$('#empty').hidden=!!shown.length;
-for(const c of shown){const article=el('article','card'),art=el('div','card-art'),img=el('img');img.src=c.imagem||'';img.alt='Carta '+c.nome;img.loading='lazy';img.onerror=()=>{img.remove();art.prepend(el('div','missing','Imagem indisponível'));};art.append(img,el('span',c.foil?'pill foil':'pill',c.foil?'✦ FOIL':'NORMAL'));const body=el('div','card-body');body.append(el('h3','',c.nome),el('div','code',c.codigo+' · '+c.colecao),el('div','meta',c.tipo+' · '+c.raridade));const bottom=el('div','card-bottom');bottom.append(el('span','availability',c.estoque+' disponíveis'),quantityControl(c));body.append(bottom);article.append(art,body);grid.append(article);}}
-function renderCart(){for(const c of cartas)if(selecionadas[c.id]>c.estoque){if(c.estoque)selecionadas[c.id]=c.estoque;else delete selecionadas[c.id];}save();const picks=cartas.filter(c=>selecionadas[c.id]>0),units=picks.reduce((sum,c)=>sum+selecionadas[c.id],0);$('#topCount').textContent=units;$('#selectedKinds').textContent=picks.length;$('#selectedUnits').textContent=units+' unidades no total';$('#bottomCart').classList.toggle('visible',units>0);$('#whatsapp').disabled=units===0;const cart=$('#cartItems');cart.replaceChildren();if(!units){cart.append(el('p','empty','Nenhuma carta selecionada ainda.'));return;}for(const c of picks){const row=el('div','cart-row'),img=el('img');img.src=c.imagem||'';img.alt='';const info=el('div');info.append(el('strong','',c.nome),el('small','',c.codigo+' · '+(c.foil?'Foil':'Normal')+' · x'+selecionadas[c.id]));row.append(img,info,quantityControl(c));cart.append(row);}}
-function openCart(){$('#overlay').hidden=false;document.body.style.overflow='hidden';$('#closeCart').focus();}function closeCart(){$('#overlay').hidden=true;document.body.style.overflow='';}
-function sendWhatsApp(){if(!/^\d{12,15}$/.test(WHATSAPP_NUMERO)||WHATSAPP_NUMERO==='5555999999999'){alert('Antes de usar, configure WHATSAPP_NUMERO em script.js com seu número real.');return;}const picks=cartas.filter(c=>selecionadas[c.id]>0);if(!picks.length)return;const text=['Olá! Tenho interesse nestas cartas de Riftbound:','',...picks.map(c=>`• ${selecionadas[c.id]}x ${c.nome} (${c.codigo} · ${c.colecao} · ${c.foil?'Foil':'Normal'})`),'','Podemos conversar sobre a disponibilidade e os valores?'].join('\n');window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(text)}`,'_blank','noopener,noreferrer');}
-async function init(){try{const r=await fetch('./cartas.json',{cache:'no-store'});if(!r.ok)throw new Error('JSON '+r.status);const data=await r.json();if(!Array.isArray(data))throw new Error('Formato de JSON inválido');cartas=data.filter(c=>c.id&&c.nome&&Number.isInteger(c.estoque)&&c.estoque>0);fillFilter('#collection','colecao');fillFilter('#type','tipo');fillFilter('#rarity','raridade');$('#stockTotal').textContent=cartas.reduce((s,c)=>s+c.estoque,0);$('#status').textContent='Escolha as cartas que deseja negociar.';render();renderCart();}catch(err){console.error(err);$('#status').textContent='Erro ao carregar o catálogo';$('#error').hidden=false;}}
-for(const id of ['#search','#collection','#type','#rarity','#foil','#sort'])$(id).addEventListener('input',render);
-$('#clear').onclick=()=>{$('#search').value='';for(const id of ['#collection','#type','#rarity'])$(id).value='';$('#foil').checked=false;render()};
-$('#cartTop').onclick=$('#viewCart').onclick=openCart;$('#closeCart').onclick=closeCart;$('#overlay').onclick=e=>{if(e.target===$('#overlay'))closeCart()};document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCart()});$('#resetCart').onclick=()=>{selecionadas={};save();render();renderCart()};$('#whatsapp').onclick=sendWhatsApp;init();
+try {
+  selecionadas = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") || {};
+} catch {
+  selecionadas = {};
+}
+const save = () => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(selecionadas));
+  } catch {}
+};
+const el = (tag, cls, value) => {
+  const x = document.createElement(tag);
+  if (cls) x.className = cls;
+  if (value !== undefined) x.textContent = value;
+  return x;
+};
+const norm = (s) =>
+  String(s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+// ===== COMPONENTS =====
+function fillFilter(id, key) {
+  const select = $(id);
+  [...new Set(cartas.map((c) => c[key]))]
+    .filter(Boolean)
+    .sort()
+    .forEach((v) => {
+      const o = el("option", "", v);
+      o.value = v;
+      select.append(o);
+    });
+}
+function setQty(id, newQty) {
+  const c = cartas.find((x) => x.id === id);
+  if (!c) return;
+  const qty = Math.max(0, Math.min(c.estoque, newQty));
+  if (qty) selecionadas[id] = qty;
+  else delete selecionadas[id];
+  save();
+  render();
+  renderCart();
+}
+function quantityControl(c) {
+  const box = el("div", "qty");
+  const minus = el("button", "", "−"),
+    val = el("b", "", String(selecionadas[c.id] || 0)),
+    plus = el("button", "", "+");
+  minus.type = plus.type = "button";
+  minus.disabled = !selecionadas[c.id];
+  plus.disabled = (selecionadas[c.id] || 0) >= c.estoque;
+  minus.setAttribute("aria-label", "Diminuir " + c.nome);
+  plus.setAttribute("aria-label", "Aumentar " + c.nome);
+  minus.onclick = () => setQty(c.id, (selecionadas[c.id] || 0) - 1);
+  plus.onclick = () => setQty(c.id, (selecionadas[c.id] || 0) + 1);
+  box.append(minus, val, plus);
+  return box;
+}
+function render() {
+  const q = norm($("#search").value.trim()),
+    collection = $("#collection").value,
+    type = $("#type").value,
+    rarity = $("#rarity").value,
+    foil = $("#foil").checked,
+    sort = $("#sort").value;
+  let shown = cartas.filter(
+    (c) =>
+      (!q || norm(c.nome + " " + c.codigo).includes(q)) &&
+      (!collection || c.colecao === collection) &&
+      (!type || c.tipo === type) &&
+      (!rarity || c.raridade === rarity) &&
+      (!foil || c.foil),
+  );
+  shown.sort((a, b) =>
+    sort === "stock"
+      ? b.estoque - a.estoque
+      : sort === "collection"
+        ? a.colecao.localeCompare(b.colecao) || a.nome.localeCompare(b.nome)
+        : a.nome.localeCompare(b.nome),
+  );
+  const grid = $("#grid");
+  grid.replaceChildren();
+  $("#results").textContent =
+    `${shown.length} ${shown.length === 1 ? "carta encontrada" : "cartas encontradas"}`;
+  $("#empty").hidden = !!shown.length;
+  for (const c of shown) {
+    const article = el("article", "card"),
+      art = el("div", "card-art"),
+      img = el("img");
+    img.src = c.imagem || "";
+    img.alt = "Carta " + c.nome;
+    img.loading = "lazy";
+    img.onerror = () => {
+      img.remove();
+      art.prepend(el("div", "missing", "Imagem indisponível"));
+    };
+    art.append(
+      img,
+      el("span", c.foil ? "pill foil" : "pill", c.foil ? "✦ FOIL" : "NORMAL"),
+    );
+    const body = el("div", "card-body");
+    body.append(
+      el("h3", "", c.nome),
+      el("div", "code", c.codigo + " · " + c.colecao),
+      el("div", "meta", c.tipo + " · " + c.raridade),
+    );
+    const bottom = el("div", "card-bottom");
+    bottom.append(
+      el("span", "availability", c.estoque + " disponíveis"),
+      quantityControl(c),
+    );
+    body.append(bottom);
+    article.append(art, body);
+    grid.append(article);
+  }
+}
+function renderCart() {
+  for (const c of cartas)
+    if (selecionadas[c.id] > c.estoque) {
+      if (c.estoque) selecionadas[c.id] = c.estoque;
+      else delete selecionadas[c.id];
+    }
+  save();
+  const picks = cartas.filter((c) => selecionadas[c.id] > 0),
+    units = picks.reduce((sum, c) => sum + selecionadas[c.id], 0);
+  $("#topCount").textContent = units;
+  $("#selectedKinds").textContent = picks.length;
+  $("#selectedUnits").textContent = units + " unidades no total";
+  $("#bottomCart").classList.toggle("visible", units > 0);
+  $("#whatsapp").disabled = units === 0;
+  const cart = $("#cartItems");
+  cart.replaceChildren();
+  if (!units) {
+    cart.append(el("p", "empty", "Nenhuma carta selecionada ainda."));
+    return;
+  }
+  for (const c of picks) {
+    const row = el("div", "cart-row"),
+      img = el("img");
+    img.src = c.imagem || "";
+    img.alt = "";
+    const info = el("div");
+    info.append(
+      el("strong", "", c.nome),
+      el(
+        "small",
+        "",
+        c.codigo +
+          " · " +
+          (c.foil ? "Foil" : "Normal") +
+          " · x" +
+          selecionadas[c.id],
+      ),
+    );
+    row.append(img, info, quantityControl(c));
+    cart.append(row);
+  }
+}
+// ===== MAIN COMPONENT =====
+function openCart() {
+  $("#overlay").hidden = false;
+  document.body.style.overflow = "hidden";
+  $("#closeCart").focus();
+}
+function closeCart() {
+  $("#overlay").hidden = true;
+  document.body.style.overflow = "";
+}
+function sendWhatsApp() {
+  if (
+    !/^\d{12,15}$/.test(WHATSAPP_NUMERO) ||
+    WHATSAPP_NUMERO === "5555999999999"
+  ) {
+    alert(
+      "Antes de usar, configure WHATSAPP_NUMERO em script.js com seu número real.",
+    );
+    return;
+  }
+  const picks = cartas.filter((c) => selecionadas[c.id] > 0);
+  if (!picks.length) return;
+  const text = [
+    "Olá! Tenho interesse nestas cartas de Riftbound:",
+    "",
+    ...picks.map(
+      (c) =>
+        `• ${selecionadas[c.id]}x ${c.nome} (${c.codigo} · ${c.colecao} · ${c.foil ? "Foil" : "Normal"})`,
+    ),
+    "",
+    "Podemos conversar sobre a disponibilidade e os valores?",
+  ].join("\n");
+  window.open(
+    `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(text)}`,
+    "_blank",
+    "noopener,noreferrer",
+  );
+}
+async function init() {
+  try {
+    const r = await fetch("./cartas.json", { cache: "no-store" });
+    if (!r.ok) throw new Error("JSON " + r.status);
+    const data = await r.json();
+    if (!Array.isArray(data)) throw new Error("Formato de JSON inválido");
+    cartas = data.filter(
+      (c) => c.id && c.nome && Number.isInteger(c.estoque) && c.estoque > 0,
+    );
+    fillFilter("#collection", "colecao");
+    fillFilter("#type", "tipo");
+    fillFilter("#rarity", "raridade");
+    $("#stockTotal").textContent = cartas.reduce((s, c) => s + c.estoque, 0);
+    $("#status").textContent = "Escolha as cartas que deseja negociar.";
+    render();
+    renderCart();
+  } catch (err) {
+    console.error(err);
+    $("#status").textContent = "Erro ao carregar o catálogo";
+    $("#error").hidden = false;
+  }
+}
+for (const id of [
+  "#search",
+  "#collection",
+  "#type",
+  "#rarity",
+  "#foil",
+  "#sort",
+])
+  $(id).addEventListener("input", render);
+$("#clear").onclick = () => {
+  $("#search").value = "";
+  for (const id of ["#collection", "#type", "#rarity"]) $(id).value = "";
+  $("#foil").checked = false;
+  render();
+};
+$("#cartTop").onclick = $("#viewCart").onclick = openCart;
+$("#closeCart").onclick = closeCart;
+$("#overlay").onclick = (e) => {
+  if (e.target === $("#overlay")) closeCart();
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeCart();
+});
+$("#resetCart").onclick = () => {
+  selecionadas = {};
+  save();
+  render();
+  renderCart();
+};
+$("#whatsapp").onclick = sendWhatsApp;
+init();

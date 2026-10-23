@@ -1,13 +1,159 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b121c"><title>Riftbound | Fichário Virtual</title><link rel="stylesheet" href="style.css"></head>
-<body>
-<header class="topbar"><div class="container top-inner"><a href="./" class="brand"><span class="brand-mark">✦</span><span>RIFT<span class="gold">BOUND</span><small>FICHÁRIO VIRTUAL</small></span></a><nav><a href="#catalogo">Cartas disponíveis</a><a href="#como-funciona">Como funciona</a></nav><button id="cartTop" class="cart-top" aria-label="Ver seleção">◈ <span id="topCount">0</span> selecionadas</button></div></header>
-<section class="hero"><div class="container hero-inner"><div class="eyebrow">COLECIONE • TROQUE • NEGOCIE</div><h1>Seu próximo <em>achado</em><br>está aqui.</h1><p>Explore as cartas disponíveis de Riftbound, escolha as quantidades e envie sua lista diretamente pelo WhatsApp.</p><a href="#catalogo" class="primary-link">Explorar cartas ↓</a><div class="hero-glow"></div></div></section>
-<main class="container" id="catalogo"><div class="heading"><div><span class="eyebrow">NOSSO ACERVO</span><h2>Cartas disponíveis</h2><p id="status">Carregando catálogo...</p></div><div class="stock-summary"><strong id="stockTotal">—</strong><span>unidades em estoque</span></div></div>
-<div class="filters"><div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="Buscar nome ou código (ex.: OGN-027)..." aria-label="Buscar cartas"></div><div class="filter-row"><label>Coleção<select id="collection"><option value="">Todas</option></select></label><label>Tipo<select id="type"><option value="">Todos</option></select></label><label>Raridade<select id="rarity"><option value="">Todas</option></select></label><label class="foil-field"><span>Só foil</span><input id="foil" type="checkbox" role="switch"><span class="toggle"></span></label><button id="clear" class="clear-btn">Limpar filtros</button></div></div>
-<div class="list-info"><span id="results"></span><select id="sort" aria-label="Ordenação"><option value="name">Nome A–Z</option><option value="stock">Maior estoque</option><option value="collection">Coleção</option></select></div><div id="grid" class="grid"></div><div id="empty" class="empty" hidden>Nenhuma carta encontrada para estes filtros.</div><div id="error" class="empty" hidden>Não foi possível ler cartas.json. Execute com um servidor local (Live Server ou python -m http.server 8000).</div>
-<section id="como-funciona" class="how"><h2>Como funciona?</h2><div class="how-grid"><div><b>01</b><h3>Encontre as cartas</h3><p>Busque por nome, código, coleção, raridade ou tipo.</p></div><div><b>02</b><h3>Escolha a quantidade</h3><p>Use + e − para montar sua seleção conforme o estoque.</p></div><div><b>03</b><h3>Converse pelo WhatsApp</h3><p>Envie a lista pronta e combine os detalhes da negociação.</p></div></div></section></main>
-<footer>Fichário virtual de Riftbound · Projeto independente, não afiliado à Riot Games.</footer>
-<div class="bottom-cart" id="bottomCart"><div><strong><span id="selectedKinds">0</span> cartas selecionadas</strong><small id="selectedUnits">0 unidades no total</small></div><button id="viewCart">Ver seleção <span>→</span></button></div>
-<div class="overlay" id="overlay" hidden><div class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle"><div class="drawer-head"><div><span class="eyebrow">SUA LISTA</span><h2 id="drawerTitle">Cartas selecionadas</h2></div><button id="closeCart" class="icon-btn" aria-label="Fechar">✕</button></div><div id="cartItems" class="cart-items"></div><div class="drawer-foot"><p>O envio da mensagem não reserva as cartas. Confirme disponibilidade e valores na conversa.</p><button id="whatsapp" class="whatsapp">Enviar lista no WhatsApp ↗</button><button id="resetCart" class="clear-btn">Limpar seleção</button></div></div></div>
-<script src="script.js" defer></script></body></html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#0b121c" />
+    <title>Riftbound | Fichário Virtual</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container top-inner">
+        <a href="./" class="brand"
+          ><span class="brand-mark">✦</span
+          ><span
+            >RIFT<span class="gold">BOUND</span
+            ><small>FICHÁRIO VIRTUAL</small></span
+          ></a
+        >
+        <nav>
+          <a href="#catalogo">Cartas disponíveis</a
+          ><a href="#como-funciona">Como funciona</a>
+        </nav>
+        <button id="cartTop" class="cart-top" aria-label="Ver seleção">
+          ◈ <span id="topCount">0</span> selecionadas
+        </button>
+      </div>
+    </header>
+    <section class="hero">
+      <div class="container hero-inner">
+        <div class="eyebrow">COLECIONE • TROQUE • NEGOCIE</div>
+        <h1>Seu próximo <em>achado</em><br />está aqui.</h1>
+        <p>
+          Explore as cartas disponíveis de Riftbound, escolha as quantidades e
+          envie sua lista diretamente pelo WhatsApp.
+        </p>
+        <a href="#catalogo" class="primary-link">Explorar cartas ↓</a>
+        <div class="hero-glow"></div>
+      </div>
+    </section>
+    <main class="container" id="catalogo">
+      <div class="heading">
+        <div>
+          <span class="eyebrow">NOSSO ACERVO</span>
+          <h2>Cartas disponíveis</h2>
+          <p id="status">Carregando catálogo...</p>
+        </div>
+        <div class="stock-summary">
+          <strong id="stockTotal">—</strong><span>unidades em estoque</span>
+        </div>
+      </div>
+      <div class="filters">
+        <div class="search-wrap">
+          <span>⌕</span
+          ><input
+            id="search"
+            type="search"
+            placeholder="Buscar nome ou código (ex.: OGN-027)..."
+            aria-label="Buscar cartas"
+          />
+        </div>
+        <div class="filter-row">
+          <label
+            >Coleção<select id="collection">
+              <option value="">Todas</option>
+            </select></label
+          ><label
+            >Tipo<select id="type">
+              <option value="">Todos</option>
+            </select></label
+          ><label
+            >Raridade<select id="rarity">
+              <option value="">Todas</option>
+            </select></label
+          ><label class="foil-field"
+            ><span>Só foil</span
+            ><input id="foil" type="checkbox" role="switch" /><span
+              class="toggle"
+            ></span></label
+          ><button id="clear" class="clear-btn">Limpar filtros</button>
+        </div>
+      </div>
+      <div class="list-info">
+        <span id="results"></span
+        ><select id="sort" aria-label="Ordenação">
+          <option value="name">Nome A–Z</option>
+          <option value="stock">Maior estoque</option>
+          <option value="collection">Coleção</option>
+        </select>
+      </div>
+      <div id="grid" class="grid"></div>
+      <div id="empty" class="empty" hidden>
+        Nenhuma carta encontrada para estes filtros.
+      </div>
+      <div id="error" class="empty" hidden>
+        Não foi possível ler cartas.json. Execute com um servidor local (Live
+        Server ou python -m http.server 8000).
+      </div>
+      <section id="como-funciona" class="how">
+        <h2>Como funciona?</h2>
+        <div class="how-grid">
+          <div>
+            <b>01</b>
+            <h3>Encontre as cartas</h3>
+            <p>Busque por nome, código, coleção, raridade ou tipo.</p>
+          </div>
+          <div>
+            <b>02</b>
+            <h3>Escolha a quantidade</h3>
+            <p>Use + e − para montar sua seleção conforme o estoque.</p>
+          </div>
+          <div>
+            <b>03</b>
+            <h3>Converse pelo WhatsApp</h3>
+            <p>Envie a lista pronta e combine os detalhes da negociação.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      Fichário virtual de Riftbound · Projeto independente, não afiliado à Riot
+      Games.
+    </footer>
+    <div class="bottom-cart" id="bottomCart">
+      <div>
+        <strong><span id="selectedKinds">0</span> cartas selecionadas</strong
+        ><small id="selectedUnits">0 unidades no total</small>
+      </div>
+      <button id="viewCart">Ver seleção <span>→</span></button>
+    </div>
+    <div class="overlay" id="overlay" hidden>
+      <div
+        class="drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="drawerTitle"
+      >
+        <div class="drawer-head">
+          <div>
+            <span class="eyebrow">SUA LISTA</span>
+            <h2 id="drawerTitle">Cartas selecionadas</h2>
+          </div>
+          <button id="closeCart" class="icon-btn" aria-label="Fechar">✕</button>
+        </div>
+        <div id="cartItems" class="cart-items"></div>
+        <div class="drawer-foot">
+          <p>
+            O envio da mensagem não reserva as cartas. Confirme disponibilidade
+            e valores na conversa.
+          </p>
+          <button id="whatsapp" class="whatsapp">
+            Enviar lista no WhatsApp ↗</button
+          ><button id="resetCart" class="clear-btn">Limpar seleção</button>
+        </div>
+      </div>
+    </div>
+    <script src="script.js" defer></script>
+  </body>
+</html>
